@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Pet Dashboard</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Welcome, <%= username %>!</h1>
+    <p>🐾 Here's your pet dashboard.</p>
+
+    <div class="section">
+      <h2>Your Pets</h2>
+      <% if (pets && pets.length) { %>
+        <div class="pet-list">
+          <% pets.forEach(pet => { %>
+            <div class="pet-info">
+              <h3><%= pet.name %></h3>
+              <p><strong>Breed:</strong> <%= pet.breed || 'Unknown' %></p>
+              <p><strong>Age:</strong> <%= pet.age || 'Unknown' %> years</p>
+              <p><strong>Species:</strong> <%= pet.species || 'Unknown' %></p>
+            </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <p>No pets added yet. <a href="/add-pet.html">Add your first pet</a></p>
+      <% } %>
+    </div>
+
+    <div class="section">
+      <h2>Upcoming Tasks</h2>
+      <% if (tasks && tasks.length) { %>
+        <div class="task-list">
+          <% tasks.forEach(task => { %>
+            <div class="task-item">
+              <h4><%= task.title %></h4>
+              <p><strong>Pet:</strong> <%= task.pet_name %></p>
+              <p><strong>Due:</strong> <%= new Date(task.due_date).toLocaleString() %></p>
+              <p><strong>Priority:</strong> <%= task.priority %></p>
+            </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <p>No upcoming tasks. <a href="/add-task.html">Schedule a task</a></p>
+      <% } %>
+    </div>
+
+    <div class="quick-actions">
+      <h2>Quick Actions</h2>
+      <div class="action-buttons">
+        <a href="/add-pet.html" class="btn">Add New Pet</a>
+        <a href="/add-task.html" class="btn">Schedule Task</a>
+        <a href="/health-tracker.html" class="btn">Health Tracker</a>
+        <a href="/community" class="btn">Community</a>
+      </div>
+    </div>
+
+    <form action="/auth/logout" method="POST" class="logout-form">
+      <button type="submit" class="btn btn-logout">Logout</button>
+    </form>
+  </div>
+</body>
+</html>

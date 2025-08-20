@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Admin Dashboard</h1>
+
+    <section class="section">
+      <h2>Users</h2>
+      <table>
+        <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>Created</th></tr></thead>
+        <tbody>
+          <% (users||[]).forEach(u => { %>
+            <tr>
+              <td><%= u.user_id %></td>
+              <td><%= u.username %></td>
+              <td><%= u.email %></td>
+              <td><%= u.role %></td>
+              <td><%= new Date(u.created_at).toLocaleString() %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Pets</h2>
+      <table>
+        <thead><tr><th>ID</th><th>User</th><th>Name</th><th>Species</th><th>Breed</th><th>Age</th></tr></thead>
+        <tbody>
+          <% (pets||[]).forEach(p => { %>
+            <tr>
+              <td><%= p.pet_id %></td>
+              <td><%= p.username %></td>
+              <td><%= p.name %></td>
+              <td><%= p.species %></td>
+              <td><%= p.breed %></td>
+              <td><%= p.age %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Community Posts</h2>
+      <table>
+        <thead><tr><th>ID</th><th>User</th><th>Title</th><th>Approved</th><th>Created</th></tr></thead>
+        <tbody>
+          <% (posts||[]).forEach(p => { %>
+            <tr>
+              <td><%= p.post_id %></td>
+              <td><%= p.username %></td>
+              <td><%= p.title %></td>
+              <td><%= p.is_approved ? 'Yes' : 'No' %></td>
+              <td><%= new Date(p.created_at).toLocaleString() %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+  </div>
+</body>
+</html>

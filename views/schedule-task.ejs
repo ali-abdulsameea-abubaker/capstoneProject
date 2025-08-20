@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Schedule a Task</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Schedule Task</h1>
+    
+    <% if (pets.length === 0) { %>
+      <div class="card">
+        <p>No pets available. Please <a href="/add-pet">add a pet</a> first.</p>
+      </div>
+    <% } else { %>
+      <form action="/tasks" method="POST" class="card">
+        <div>
+          <label for="pet_id">Pet *</label>
+          <select id="pet_id" name="pet_id" required>
+            <option value="">Select a Pet</option>
+            <% pets.forEach(pet => { %>
+              <option value="<%= pet.pet_id %>"><%= pet.name %> (<%= pet.species %>)</option>
+            <% }); %>
+          </select>
+        </div>
+        <div>
+          <label for="task_type">Task Type *</label>
+          <select id="task_type" name="task_type" required>
+            <option value="feeding">Feeding</option>
+            <option value="cleaning">Cleaning</option>
+            <option value="vaccination">Vaccination</option>
+            <option value="medication">Medication</option>
+            <option value="grooming">Grooming</option>
+            <option value="vet_visit">Vet Visit</option>
+            <option value="exercise">Exercise</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label for="title">Title *</label>
+          <input type="text" id="title" name="title" required />
+        </div>
+        <div>
+          <label for="description">Description</label>
+          <textarea id="description" name="description" rows="3"></textarea>
+        </div>
+        <div>
+          <label for="due_date">Due Date *</label>
+          <input type="datetime-local" id="due_date" name="due_date" required />
+        </div>
+        <div>
+          <label for="priority">Priority</label>
+          <select id="priority" name="priority">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+        <button type="submit" class="btn">Save Task</button>
+      </form>
+    <% } %>
+    
+    <p><a href="/dashboard">← Back to Dashboard</a></p>
+  </div>
+</body>
+</html>
