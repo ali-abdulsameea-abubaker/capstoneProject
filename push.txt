@@ -1,0 +1,19 @@
+# Create .gitignore (you already have one)
+# Add initial files
+git add .
+
+# Make first commit
+git commit -m "Initial project setup with basic authentication system"
+
+# Add your GitHub repository as remote
+git remote add origin https://github.com/Steve-at-Mohawk-College/capstone-project-AliAbubaker000857347
+
+# Push to GitHub
+git branch -M main
+git push -u origin main
+
+
+✅ Admin password updated successfully!
+Email: admin-petCare-2025@petcare.com
+Password: SecureAdminPassword123!
+Login at: /admin/login
