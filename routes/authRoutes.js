@@ -1,3 +1,8 @@
+const HARDCODED_ADMIN_EMAIL = 'admin-petCare-2025@petcare.com';
+
+
+
+
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
@@ -62,29 +67,69 @@ router.get('/verify', async (req, res) => {
 });
 
 // POST /auth/login
+
+
+
+// POST /auth/login
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body || {};
+  const { email, password, isAdminLogin } = req.body || {};
   if (!email || !password) return res.status(400).send('Email and password required.');
 
   try {
     const user = await findByEmail(email);
-    if (!user) return res.send('Invalid credentials');
+    if (!user) return res.status(400).render('login', { 
+      title: 'Login - Pet Care Management',
+      error: 'Invalid credentials' 
+    });
 
     const ok = await bcrypt.compare(password, user.password_hash);
-    if (!ok) return res.send('Wrong password');
-    if (!user.is_verified) return res.send('Please verify your email first.');
+    if (!ok) return res.status(400).render('login', { 
+      title: 'Login - Pet Care Management',
+      error: 'Wrong password' 
+    });
+    
+    if (!user.is_verified && user.email !== HARDCODED_ADMIN_EMAIL) {
+      return res.status(400).render('login', { 
+        title: 'Login - Pet Care Management',
+        error: 'Please verify your email first.' 
+      });
+    }
+
+    // Auto-promote hardcoded admin email to admin role
+    if (user.email === HARDCODED_ADMIN_EMAIL && user.role !== 'admin') {
+      await query('UPDATE users SET role = "admin" WHERE user_id = ?', [user.user_id]);
+      user.role = 'admin';
+    }
+
+    // Check if trying to access admin panel but not an admin
+    if (isAdminLogin && user.role !== 'admin') {
+      return res.status(403).render('login', { 
+        title: 'Login - Pet Care Management',
+        error: 'Access denied. Admin privileges required.' 
+      });
+    }
 
     req.session.userId = user.user_id;
     req.session.username = user.username;
     req.session.role = user.role;
     req.session.email = user.email;
 
+    // Redirect to admin dashboard if admin login or hardcoded admin
+    if ((user.role === 'admin' && isAdminLogin) || user.email === HARDCODED_ADMIN_EMAIL) {
+      return res.redirect('/admin/dashboard');
+    }
+    
+    // Regular user login
     res.redirect('/dashboard');
   } catch (e) {
     console.error('Login error:', e);
-    res.status(500).send('Database error during login.');
+    res.status(500).render('login', { 
+      title: 'Login - Pet Care Management',
+      error: 'Database error during login.' 
+    });
   }
 });
+
 
 // POST /auth/logout
 router.post('/logout', (req, res) => {

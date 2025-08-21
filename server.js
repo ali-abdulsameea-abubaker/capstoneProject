@@ -260,6 +260,18 @@ app.get('/health-check', async (req, res) => {
   }
 });
 
+// Admin routes
+const adminRoutes = require('./routes/adminRoutes');
+app.use('/admin', adminRoutes);
+
+// Admin login route
+app.get('/admin/login', (req, res) => {
+  if (req.session?.userId && req.session.role === 'admin') {
+    return res.redirect('/admin/dashboard');
+  }
+  res.render('admin-login', { title: 'Admin Login - Pet Care Management' });
+});
+
 // ===== Error Handling =====
 app.use((err, req, res, next) => {
   console.error('Error:', err.stack);
@@ -307,6 +319,8 @@ process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
   process.exit(1);
 });
+
+
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
