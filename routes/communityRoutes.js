@@ -9,9 +9,21 @@ function requireAuth(req, res, next) {
 }
 
 // GET /community
-router.get('/', requireAuth, async (_req, res) => {
-  const posts = await getPosts();
-  res.render('community', { posts });
+router.get('/', requireAuth, async (req, res) => {
+  try {
+    const posts = await getPosts();
+    res.render('community', { 
+      title: 'Community',
+      posts 
+    });
+  } catch (error) {
+    console.error('Community error:', error);
+    res.status(500).render('error', {
+      title: 'Error',
+      message: 'Error loading community page.',
+      error: process.env.NODE_ENV === 'development' ? error : {}
+    });
+  }
 });
 
 // POST /community

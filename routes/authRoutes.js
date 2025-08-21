@@ -33,17 +33,31 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// GET /auth/verify?token=...
+// In your authRoutes.js, update the verification route:
 router.get('/verify', async (req, res) => {
   const { token } = req.query;
-  if (!token) return res.status(400).send('Invalid token.');
+  if (!token) return res.status(400).render('error', {
+    title: 'Error',
+    message: 'Invalid token.',
+    error: {}
+  });
+  
   try {
     const result = await verifyUser(token);
-    if (result.affectedRows === 0) return res.send('Invalid or expired token.');
-    res.redirect('/verify.html');
+    if (result.affectedRows === 0) return res.render('error', {
+      title: 'Error',
+      message: 'Invalid or expired token.',
+      error: {}
+    });
+    
+    res.render('verify', { title: 'Email Verified - Pet Care' });
   } catch (e) {
     console.error('Verification error:', e);
-    res.status(500).send('Database error during verification.');
+    res.status(500).render('error', {
+      title: 'Error',
+      message: 'Database error during verification.',
+      error: process.env.NODE_ENV === 'development' ? e : {}
+    });
   }
 });
 
@@ -77,9 +91,13 @@ router.post('/logout', (req, res) => {
   req.session.destroy(err => {
     if (err) {
       console.error('Logout error:', err);
-      return res.status(500).send('Error logging out.');
+      return res.status(500).render('error', {
+        title: 'Error',
+        message: 'Error logging out.',
+        error: process.env.NODE_ENV === 'development' ? err : {}
+      });
     }
-    res.redirect('/login.html');
+    res.redirect('/login'); // This should point to your EJS route
   });
 });
 

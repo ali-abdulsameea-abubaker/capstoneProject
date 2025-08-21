@@ -9,7 +9,7 @@ const fs = require('fs');
 require('dotenv').config();
 
 // Database
-const { testConnection } = require('./config/database');
+const { testConnection, query } = require('./config/database');
 
 // Routes
 const authRoutes = require('./routes/authRoutes');
@@ -24,10 +24,10 @@ const app = express();
 // Authentication middleware
 function requireAuth(req, res, next) {
   if (req.session?.userId) return next();
-  return res.redirect('/login.html');
+  return res.redirect('/login');
 }
 
-// Debug middleware - FIRST middleware to catch all requests
+// Debug middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
   next();
@@ -35,22 +35,23 @@ app.use((req, res, next) => {
 
 // ===== Security Middleware =====
 app.use(helmet({
-  contentSecurityPolicy: false // Temporarily disable CSP for debugging
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+      scriptSrc: ["'self'", "https://cdn.jsdelivr.net"],
+      imgSrc: ["'self'", "data:", "https:"],
+      fontSrc: ["'self'", "https://cdn.jsdelivr.net"]
+    }
+  }
 }));
-app.use(
-  cors({
-    origin:
-      process.env.NODE_ENV === 'production'
-        ? process.env.BASE_URL
-        : 'http://localhost:3000',
-    credentials: true,
-  })
-);
+
+app.use(cors());
 app.use(compression());
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 100,
 });
 app.use(limiter);
@@ -63,7 +64,7 @@ app.use(
     saveUninitialized: false,
     cookie: {
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      maxAge: 24 * 60 * 60 * 1000,
     },
   })
 );
@@ -72,28 +73,16 @@ app.use(
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve static files with error handling
-app.use(express.static(path.join(__dirname, 'public'), {
-  index: false, // Don't serve index.html automatically
-  fallthrough: true // Allow other routes to handle requests
-}));
+// Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Set view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// ===== Test Routes =====
+// ===== Test Route =====
 app.get('/test', (req, res) => {
   res.send('Server is working!');
-});
-
-app.get('/direct-login', (req, res) => {
-  const loginPath = path.join(__dirname, 'public', 'login.html');
-  if (fs.existsSync(loginPath)) {
-    res.sendFile(loginPath);
-  } else {
-    res.status(404).send('login.html not found');
-  }
 });
 
 // ===== Main Routes =====
@@ -104,14 +93,54 @@ app.use('/health', healthRoutes);
 app.use('/community', communityRoutes);
 
 // ===== Page Routes =====
-// Serve login.html
-app.get('/login.html', (req, res) => {
-  const loginPath = path.join(__dirname, 'public', 'login.html');
-  if (fs.existsSync(loginPath)) {
-    res.sendFile(loginPath);
-  } else {
-    res.status(404).send('Login page not found');
+// Add this route before your other routes in server.js
+// Landing page route
+app.get('/', (req, res) => {
+  if (req.session?.userId) {
+    return res.redirect('/dashboard');
   }
+  res.render('landing', { title: 'Pet Care - Home' });
+});
+
+// Update the root route to redirect to landing page
+app.get('/home', (req, res) => {
+  res.redirect('/');
+});
+
+// Serve login page
+
+app.get('/login', (req, res) => {
+  if (req.session?.userId) {
+    return res.redirect('/dashboard');
+  }
+  res.render('login', { title: 'Login - Pet Care Management' });
+});
+
+// Serve register page
+app.get('/register', (req, res) => {
+  if (req.session?.userId) {
+    return res.redirect('/dashboard');
+  }
+  res.render('register', { title: 'Register - Pet Care Management' });
+});
+
+// Serve forgot password page
+app.get('/forgot-password', (req, res) => {
+  res.render('forgot-password', { title: 'Forgot Password - Pet Care' });
+});
+
+// Serve reset password page
+app.get('/reset-password', (req, res) => {
+  const { token } = req.query;
+  if (!token) {
+    return res.redirect('/login');
+  }
+  res.render('reset-password', { title: 'Reset Password - Pet Care', token });
+});
+
+// Serve verification success page
+app.get('/verify', (req, res) => {
+  res.render('verify', { title: 'Email Verified - Pet Care' });
 });
 
 // Root route
@@ -119,46 +148,16 @@ app.get('/', (req, res) => {
   if (req.session?.userId) {
     return res.redirect('/dashboard');
   }
-  
-  const loginPath = path.join(__dirname, 'public', 'login.html');
-  if (fs.existsSync(loginPath)) {
-    res.sendFile(loginPath);
-  } else {
-    // Fallback if file doesn't exist
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Pet Care - Login</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
-          .container { max-width: 400px; margin: 0 auto; }
-          .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <h1>Pet Care Management</h1>
-          <p>Login page file not found. Server is running though!</p>
-          <p><a href="/test">Test server connection</a></p>
-        </div>
-      </body>
-      </html>
-    `);
-  }
+  res.redirect('/login');
 });
 
 // Dashboard route (protected)
 app.get('/dashboard', requireAuth, async (req, res) => {
-  const { query } = require('./config/database');
-
   try {
-    // Get pets for this user
     const pets = await query('SELECT * FROM pets WHERE user_id = ?', [
       req.session.userId,
     ]);
 
-    // Get tasks
     const tasks = await query(
       `SELECT t.*, p.name as pet_name 
        FROM tasks t 
@@ -169,62 +168,82 @@ app.get('/dashboard', requireAuth, async (req, res) => {
     );
 
     res.render('dashboard', {
+      title: 'Pet Dashboard',
       username: req.session.username,
       pets,
       tasks,
     });
   } catch (err) {
     console.error('Dashboard error:', err);
-    res.status(500).send('Error loading dashboard.');
+    res.status(500).render('error', {
+      title: 'Error',
+      message: 'Error loading dashboard.',
+      error: process.env.NODE_ENV === 'development' ? err : {}
+    });
+  }
+});
+
+// Add pet form
+app.get('/pets/add', requireAuth, (req, res) => {
+  res.render('add-pet', { title: 'Add New Pet' });
+});
+
+// Health tracker page
+app.get('/health', requireAuth, (req, res) => {
+  res.render('health-tracker', { title: 'Health Tracker' });
+});
+
+// Community page
+app.get('/community', requireAuth, async (req, res) => {
+  try {
+    const posts = await query(`
+      SELECT cp.*, u.username 
+      FROM community_posts cp
+      JOIN users u ON cp.user_id = u.user_id
+      ORDER BY cp.created_at DESC
+    `);
+    
+    res.render('community', { 
+      title: 'Community',
+      posts
+    });
+  } catch (err) {
+    console.error('Community error:', err);
+    res.status(500).render('error', {
+      title: 'Error',
+      message: 'Error loading community page.',
+      error: process.env.NODE_ENV === 'development' ? err : {}
+    });
   }
 });
 
 // Schedule task form with pet data
 app.get('/schedule-task', requireAuth, async (req, res) => {
   try {
-    const { query } = require('./config/database');
-    
-    // Get user's pets
     const pets = await query('SELECT * FROM pets WHERE user_id = ?', [
       req.session.userId,
     ]);
     
     if (pets.length === 0) {
-      return res.redirect('/dashboard?message=No pets available. Please add a pet first.');
+      return res.redirect('/pets/add?message=Please add a pet first.');
     }
     
-    res.render('schedule-task', { pets });
+    res.render('schedule-task', { 
+      title: 'Schedule Task',
+      pets 
+    });
   } catch (err) {
     console.error('Schedule task form error:', err);
-    res.status(500).send('Error loading task form.');
+    res.status(500).render('error', {
+      title: 'Error',
+      message: 'Error loading task form.',
+      error: process.env.NODE_ENV === 'development' ? err : {}
+    });
   }
 });
 
-// Add pet form
-app.get('/pets/add', requireAuth, (req, res) => {
-  res.render('add-pet');
-});
-
-// ===== Redirect Routes for Old URLs =====
-app.get('/add-task.html', requireAuth, (req, res) => {
-  res.redirect('/schedule-task');
-});
-
-app.get('/add-task', requireAuth, (req, res) => {
-  res.redirect('/schedule-task');
-});
-
-app.get('/add-pet.html', requireAuth, (req, res) => {
-  res.redirect('/pets/add');
-});
-
-app.get('/health-tracker.html', requireAuth, (req, res) => {
-  res.redirect('/health');
-});
-
 // Health check endpoint
-app.get('/health', async (req, res) => {
-  const { query } = require('./config/database');
+app.get('/health-check', async (req, res) => {
   try {
     await query('SELECT 1');
     res.status(200).json({
@@ -245,6 +264,7 @@ app.get('/health', async (req, res) => {
 app.use((err, req, res, next) => {
   console.error('Error:', err.stack);
   res.status(500).render('error', {
+    title: 'Error',
     message: 'Something went wrong!',
     error: process.env.NODE_ENV === 'development' ? err : {},
   });
@@ -252,9 +272,9 @@ app.use((err, req, res, next) => {
 
 // 404 handler
 app.use((req, res) => {
-  console.log(`404 - Page not found: ${req.url}`);
   res.status(404).render('error', {
-    message: 'Page not found',
+    title: 'Page Not Found',
+    message: 'The page you are looking for does not exist.',
     error: {},
   });
 });
@@ -270,41 +290,11 @@ async function initializeApp() {
       process.exit(1);
     }
 
-    // Check if login.html exists
-    const loginPath = path.join(__dirname, 'public', 'login.html');
-    if (fs.existsSync(loginPath)) {
-      console.log('✅ login.html found at:', loginPath);
-    } else {
-      console.error('❌ login.html NOT found at:', loginPath);
-    }
-
-    // Check public directory contents
-    const publicDir = path.join(__dirname, 'public');
-    if (fs.existsSync(publicDir)) {
-      console.log('📁 Public directory contents:');
-      fs.readdirSync(publicDir).forEach(file => {
-        console.log('  -', file);
-      });
-    } else {
-      console.error('❌ Public directory does not exist!');
-    }
-
     app.listen(PORT, () => {
       console.log(`\n🚀 Server running on http://localhost:${PORT}`);
-      console.log(`📊 Health check: http://localhost:${PORT}/health`);
-      console.log(`🔗 Test route: http://localhost:${PORT}/test`);
-      console.log(`🔗 Direct login: http://localhost:${PORT}/direct-login`);
-      console.log(`🔗 Login page: http://localhost:${PORT}/login.html`);
-      console.log(`📋 Schedule task: http://localhost:${PORT}/schedule-task`);
-      console.log(`🐾 Add pet: http://localhost:${PORT}/pets/add`);
+      console.log(`📊 Health check: http://localhost:${PORT}/health-check`);
+      console.log(`🔗 Login page: http://localhost:${PORT}/login`);
       console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`\nTry these URLs in your browser to test:`);
-      console.log(`1. http://localhost:${PORT}/test`);
-      console.log(`2. http://localhost:${PORT}/direct-login`);
-      console.log(`3. http://localhost:${PORT}/login.html`);
-      console.log(`4. http://localhost:${PORT}/schedule-task`);
-      console.log(`5. http://localhost:${PORT}/pets/add`);
-      console.log(`6. http://localhost:${PORT}/`);
     });
   } catch (error) {
     console.error('Failed to initialize app:', error);

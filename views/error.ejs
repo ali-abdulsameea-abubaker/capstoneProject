@@ -1,19 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Error</title>
-  <link rel="stylesheet" href="/style.css" />
-</head>
-<body>
-  <div class="container">
-    <h1>Oops!</h1>
-    <p><%= message || 'Something went wrong.' %></p>
-    <% if (error && error.stack) { %>
-      <pre style="white-space:pre-wrap;"><%= error.stack %></pre>
-    <% } %>
-    <p><a class="btn" href="/login.html">Go Home</a></p>
+<%- include('partials/header', {title: title}) %>
+
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card card-custom">
+      <div class="card-body p-5 text-center">
+        <h1 class="display-4 text-danger">Oops!</h1>
+        <p class="lead"><%= message %></p>
+        
+        <% if (error && error.stack) { %>
+          <div class="alert alert-secondary text-start mt-4">
+            <pre class="mb-0" style="white-space:pre-wrap;"><%= error.stack %></pre>
+          </div>
+        <% } %>
+        
+        <div class="mt-4">
+          <a class="btn btn-custom" href="/dashboard">Go to Dashboard</a>
+          <a class="btn btn-outline-secondary ms-2" href="/login">Go to Login</a>
+        </div>
+      </div>
+    </div>
   </div>
-</body>
-</html>
+</div>
+
+<%- include('partials/footer') %>

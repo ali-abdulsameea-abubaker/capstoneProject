@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Login - Pet Care Management</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+  <%- include('partials/header', {title: 'Login - Pet Care Management' }) %>
+
+    <div class="container-custom py-5">
+      <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+          <div class="card shadow">
+            <div class="card-body p-5">
+              <h1 class="h3 mb-4 text-center">Login</h1>
+              <form action="/auth/login" method="POST">
+                <div class="mb-3">
+                  <label for="email" class="form-label">Email *</label>
+                  <input type="email" class="form-control" id="email" name="email" required>
+                </div>
+                <div class="mb-4">
+                  <label for="password" class="form-label">Password *</label>
+                  <input type="password" class="form-control" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-custom w-100 btn-lg">Login</button>
+              </form>
+
+              <div class="mt-4 text-center">
+                <p class="mb-2">
+                  Don't have an account? <a href="/register.html">Register here</a>
+                </p>
+                <p class="mb-0">
+                  <a href="/forgot-password.html">Forgot your password?</a>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%- include('partials/footer') %>
+</body>
+</html>
