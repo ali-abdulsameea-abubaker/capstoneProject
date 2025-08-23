@@ -28,12 +28,20 @@ async function sendVerificationEmail(email, token, username = 'User', linkOverri
         <p>If you didn’t create an account, ignore this email.</p>
       `;
 
+    // const msg = {
+    //   to: email,
+    //   from: { email: process.env.EMAIL_USER, name: 'Pet Care Management' },
+    //   subject,
+    //   html: htmlContent
+    // };
+
     const msg = {
       to: email,
-      from: { email: process.env.EMAIL_USER, name: 'Pet Care Management' },
+      from: `Pet Care Management <${process.env.EMAIL_USER}>`,
       subject,
       html: htmlContent
     };
+
 
     await sgMail.send(msg);
     console.log(`✅ Email sent to: ${email}`);
