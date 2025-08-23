@@ -14,6 +14,6 @@ git push -u origin main
 
 
 ✅ Admin password updated successfully!
-Email: admin-petCare-2025@petcare.com
+Email: supersecure-472x@petwell.com
 Password: SecureAdminPassword123!
 Login at: /admin/login

@@ -8,25 +8,25 @@ async function resetAdmin() {
     const hashedPassword = await bcrypt.hash(password, 12);
     
     // Check if admin exists
-    const [admin] = await query('SELECT * FROM users WHERE email = ?', ['first-admin@petcare.com']);
+    const [admin] = await query('SELECT * FROM users WHERE email = ?', ['supersecure-472x@petwell.com']);
     
     if (admin) {
       // Update existing admin
       await query(
         'UPDATE users SET password_hash = ?, role = "admin", is_verified = TRUE WHERE email = ?',
-        [hashedPassword, 'first-admin@petcare.com']
+        [hashedPassword, 'supersecure-472x@petwell.com']
       );
       console.log('✅ Admin password updated successfully!');
     } else {
       // Create new admin
       await query(
         'INSERT INTO users (username, email, password_hash, role, is_verified) VALUES (?, ?, ?, ?, ?)',
-        ['admin2025', 'first-admin@petcare.com', hashedPassword, 'admin', true]
+        ['admin', 'supersecure-472x@petwell.com', hashedPassword, 'admin', true]
       );
       console.log('✅ Admin user created successfully!');
     }
     
-    console.log('Email: first-admin@petcare.com');
+    console.log('Email: supersecure-472x@petwell.com');
     console.log('Password: SecureAdminPassword123!');
     console.log('Login at: /admin/login');
     
