@@ -1,50 +1,50 @@
-const nodemailer = require('nodemailer');
 const sgMail = require('@sendgrid/mail');
 require('dotenv').config();
 
-// Configure SendGrid
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 async function sendVerificationEmail(email, token, username = 'User', linkOverride = null, isReset = false) {
   try {
-    const actionLink = linkOverride || `${process.env.BASE_URL}/auth/verify?token=${token}`;
+    // FIXED: Use correct endpoint names
+    const actionLink = linkOverride || `${process.env.BASE_URL}/auth/${isReset ? 'reset-password' : 'verify'}?token=${token}`;
+    
     const subject = isReset
       ? 'Reset Your Password - Pet Care Management'
-      : 'Verify Your Email Address - Pet Care Management';
+      : 'Verify Your Email - Pet Care Management';
 
-    const htmlContent = isReset
-      ? `
-        <h2>Password Reset</h2>
-        <p>Hello ${username},</p>
-        <p>Please click the button below to reset your password. This link is valid for 1 hour.</p>
-        <p><a href="${actionLink}" style="background:#4CAF50;color:white;padding:10px 20px;text-decoration:none;border-radius:4px;">Reset Password</a></p>
-        <p>If you didn’t request this, ignore this email.</p>
-      `
-      : `
-        <h2>Email Verification</h2>
-        <p>Hello ${username},</p>
-        <p>Click below to verify your account:</p>
-        <p><a href="${actionLink}" style="background:#4CAF50;color:white;padding:10px 20px;text-decoration:none;border-radius:4px;">Verify Email</a></p>
-        <p>If you didn’t create an account, ignore this email.</p>
-      `;
+    // HTML Content
+    const htmlContent = `
+      <p>Hi ${username},</p>
+      <p>${isReset 
+        ? 'Click the link below to reset your password. This link is valid for 1 hour.'
+        : 'Click the link below to verify your email address and activate your account.'}
+      </p>
+      <p><a href="${actionLink}" style="background:#0066cc;color:#fff;padding:10px 18px;text-decoration:none;border-radius:4px;">
+        ${isReset ? 'Reset Password' : 'Verify Email'}
+      </a></p>
+      <p>If you did not request this, you can ignore this email.</p>
+      <br>
+      <p>– Pet Care Management</p>
+    `;
 
-    // const msg = {
-    //   to: email,
-    //   from: { email: process.env.EMAIL_USER, name: 'Pet Care Management' },
-    //   subject,
-    //   html: htmlContent
-    // };
+    // Plain Text Content
+    const textContent = isReset
+      ? `Hi ${username},\n\nClick here to reset your password: ${actionLink}\n\nThis link expires in 1 hour.\n\nIf you didn't request this, please ignore this email.\n\n– Pet Care Management`
+      : `Hi ${username},\n\nClick here to verify your email: ${actionLink}\n\nThis link expires in 1 hour.\n\nIf you didn't create an account, please ignore this email.\n\n– Pet Care Management`;
 
     const msg = {
       to: email,
-      from: `Pet Care Management <${process.env.EMAIL_USER}>`,
+      from: {
+        email: 'no-reply@em487.pet-care.live',
+        name: 'Pet Care Management'
+      },
       subject,
-      html: htmlContent
+      html: htmlContent,
+      text: textContent
     };
 
-
     await sgMail.send(msg);
-    console.log(`✅ Email sent to: ${email}`);
+    console.log(`✅ Email sent to ${email}`);
     return true;
   } catch (error) {
     console.error('❌ Email sending failed:', error);
