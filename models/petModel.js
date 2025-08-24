@@ -12,6 +12,8 @@ async function createPet(userId, { name, breed, age, species, gender, weight }) 
   return query(sql, [userId, name, breed, age, species, gender, weight]);
 }
 
+
+
 async function updatePet(petId, { name, breed, age, species, gender, weight }) {
   const sql = `
     UPDATE pets SET name=?, breed=?, age=?, species=?, gender=?, weight=? 
@@ -23,5 +25,7 @@ async function updatePet(petId, { name, breed, age, species, gender, weight }) {
 async function deletePet(petId) {
   return query(`DELETE FROM pets WHERE pet_id = ?`, [petId]);
 }
+
+
 
 module.exports = { getPetsByUser, createPet, updatePet, deletePet };

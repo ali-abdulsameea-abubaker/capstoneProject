@@ -17,15 +17,46 @@ const petRoutes = require('./routes/petRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const healthRoutes = require('./routes/healthRoutes');
 const communityRoutes = require('./routes/communityRoutes');
+const profileRoutes = require('./routes/profileRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 // ===== Create Express app =====
 const app = express();
 
-// Authentication middleware
-function requireAuth(req, res, next) {
-  if (req.session?.userId) return next();
-  return res.redirect('/login');
-}
+// ===== Session Middleware (MUST COME FIRST) =====
+// Trust Heroku proxy
+app.set('trust proxy', 1);
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'fallback-secret-for-development',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000,
+    },
+  })
+);
+
+// ===== Custom Middleware (AFTER session) =====
+// Make profile picture and username available to all views
+app.use((req, res, next) => {
+  if (req.session && req.session.userId) {
+    res.locals.profilePicture = req.session.profilePicture || null;
+    res.locals.username = req.session.username || null;
+    res.locals.userId = req.session.userId;
+    res.locals.role = req.session.role;
+  } else {
+    res.locals.profilePicture = null;
+    res.locals.username = null;
+    res.locals.userId = null;
+    res.locals.role = null;
+  }
+  next();
+});
 
 // Debug middleware
 app.use((req, res, next) => {
@@ -38,10 +69,12 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
-      scriptSrc: ["'self'", "https://cdn.jsdelivr.net"],
-      imgSrc: ["'self'", "data:", "https:"],
-      fontSrc: ["'self'", "https://cdn.jsdelivr.net"]
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com"],
+      scriptSrc: ["'self'", "https://cdn.jsdelivr.net", "'unsafe-inline'"],
+      scriptSrcAttr: ["'self'", "'unsafe-inline'"], // Add this line
+      imgSrc: ["'self'", "data:", "https:", "blob:"],
+      fontSrc: ["'self'", "https://cdn.jsdelivr.net", "https://fonts.gstatic.com"],
+      connectSrc: ["'self'"]
     }
   }
 }));
@@ -49,31 +82,12 @@ app.use(helmet({
 app.use(cors());
 app.use(compression());
 
-// Rate limiting
+// Rate limiting with higher limit for development
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: process.env.NODE_ENV === 'development' ? 1000 : 100, // Higher limit in development
 });
 app.use(limiter);
-
-// Session middleware
-// Trust Heroku proxy
-app.set('trust proxy', 1);
-
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || 'fallback-secret-for-development',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === 'production', // keep true
-      httpOnly: true,
-      sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000,
-    },
-  })
-);
-
 // ===== Application Middleware =====
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -85,6 +99,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// ===== Authentication Middleware =====
+function requireAuth(req, res, next) {
+  if (req.session && req.session.userId) return next();
+  return res.redirect('/login');
+}
+
 // ===== Test Route =====
 app.get('/test', (req, res) => {
   res.send('Server is working!');
@@ -92,49 +112,49 @@ app.get('/test', (req, res) => {
 
 // ===== Main Routes =====
 app.use('/auth', authRoutes);
-app.use('/pets', petRoutes);
-app.use('/tasks', taskRoutes);
-app.use('/health', healthRoutes);
-app.use('/community', communityRoutes);
+app.use('/pets', requireAuth, petRoutes);
+app.use('/tasks', requireAuth, taskRoutes);
+app.use('/health', requireAuth, healthRoutes);
+app.use('/community', requireAuth, communityRoutes);
+app.use('/profile', requireAuth, profileRoutes);
+app.use('/admin', adminRoutes);
 
 // ===== Page Routes =====
-// Add this route before your other routes in server.js
 // Landing page route
 app.get('/', (req, res) => {
-  if (req.session?.userId) {
+  if (req.session && req.session.userId) {
     return res.redirect('/dashboard');
   }
   res.render('landing', { title: 'Pet Care - Home' });
 });
 
-// Update the root route to redirect to landing page
+// Home route redirect
 app.get('/home', (req, res) => {
   res.redirect('/');
 });
 
-// Serve login page
-
+// Login page
 app.get('/login', (req, res) => {
-  if (req.session?.userId) {
+  if (req.session && req.session.userId) {
     return res.redirect('/dashboard');
   }
   res.render('login', { title: 'Login - Pet Care Management' });
 });
 
-// Serve register page
+// Register page
 app.get('/register', (req, res) => {
-  if (req.session?.userId) {
+  if (req.session && req.session.userId) {
     return res.redirect('/dashboard');
   }
   res.render('register', { title: 'Register - Pet Care Management' });
 });
 
-// Serve forgot password page
+// Forgot password page
 app.get('/forgot-password', (req, res) => {
   res.render('forgot-password', { title: 'Forgot Password - Pet Care' });
 });
 
-// Serve reset password page
+// Reset password page
 app.get('/reset-password', (req, res) => {
   const { token } = req.query;
   if (!token) {
@@ -143,18 +163,11 @@ app.get('/reset-password', (req, res) => {
   res.render('reset-password', { title: 'Reset Password - Pet Care', token });
 });
 
-// Serve verification success page
+// Verification success page
 app.get('/verify', (req, res) => {
   res.render('verify', { title: 'Email Verified - Pet Care' });
 });
 
-// Root route
-app.get('/', (req, res) => {
-  if (req.session?.userId) {
-    return res.redirect('/dashboard');
-  }
-  res.redirect('/login');
-});
 
 // Dashboard route (protected)
 app.get('/dashboard', requireAuth, async (req, res) => {
@@ -247,6 +260,14 @@ app.get('/schedule-task', requireAuth, async (req, res) => {
   }
 });
 
+// Admin login route
+app.get('/admin/login', (req, res) => {
+  if (req.session && req.session.userId && req.session.role === 'admin') {
+    return res.redirect('/admin/dashboard');
+  }
+  res.render('admin-login', { title: 'Admin Login - Pet Care Management' });
+});
+
 // Health check endpoint
 app.get('/health-check', async (req, res) => {
   try {
@@ -265,17 +286,31 @@ app.get('/health-check', async (req, res) => {
   }
 });
 
-// Admin routes
-const adminRoutes = require('./routes/adminRoutes');
-app.use('/admin', adminRoutes);
-
-// Admin login route
-app.get('/admin/login', (req, res) => {
-  if (req.session?.userId && req.session.role === 'admin') {
-    return res.redirect('/admin/dashboard');
-  }
-  res.render('admin-login', { title: 'Admin Login - Pet Care Management' });
+// Serve CSS files with correct MIME type
+app.get('*.css', (req, res, next) => {
+  res.setHeader('Content-Type', 'text/css');
+  next();
 });
+
+// Debug middleware for static files
+app.use((req, res, next) => {
+  if (req.url.endsWith('.css')) {
+    console.log('CSS request:', req.url);
+  }
+  next();
+});
+
+// // Serve theme CSS
+// app.get('/css/theme.css', (req, res) => {
+//   res.setHeader('Content-Type', 'text/css');
+//   res.sendFile(path.join(__dirname, 'public/css/theme.css'));
+// });
+
+// // Serve theme JS
+// app.get('/js/theme.js', (req, res) => {
+//   res.setHeader('Content-Type', 'application/javascript');
+//   res.sendFile(path.join(__dirname, 'public/js/theme.js'));
+// });
 
 // ===== Error Handling =====
 app.use((err, req, res, next) => {
@@ -324,8 +359,6 @@ process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
   process.exit(1);
 });
-
-
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);

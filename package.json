@@ -32,8 +32,10 @@
     "express-rate-limit": "^7.5.1",
     "express-session": "^1.18.2",
     "helmet": "^7.2.0",
+    "multer": "^2.0.2",
     "mysql2": "^3.6.5",
-    "nodemailer": "^6.9.8"
+    "nodemailer": "^6.9.8",
+    "sharp": "^0.34.3"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
@@ -42,7 +44,4 @@
     "node": ">=16.0.0",
     "npm": ">=8.0.0"
   }
-  
 }
-
-

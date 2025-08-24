@@ -39,6 +39,7 @@ router.put('/:taskId', requireAuth, async (req, res) => {
 });
 
 // DELETE /tasks/:taskId
+
 router.delete('/:taskId', requireAuth, async (req, res) => {
   try {
     await deleteTask(req.params.taskId);

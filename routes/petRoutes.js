@@ -39,6 +39,7 @@ router.put('/:petId', requireAuth, async (req, res) => {
 });
 
 // DELETE /pets/:petId
+
 router.delete('/:petId', requireAuth, async (req, res) => {
   try {
     await deletePet(req.params.petId);

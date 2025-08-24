@@ -2,12 +2,21 @@
 
   <div class="row justify-content-center align-items-center min-vh-80 py-5">
     <div class="col-md-6 col-lg-5">
-      <!-- Back to Home Button (Mobile) -->
-      <div class="d-block d-md-none mb-4 text-center">
-        <a href="/" class="btn btn-outline-secondary btn-sm">
-          <i class="bi bi-arrow-left me-1"></i>Back to Home
-        </a>
-      </div>
+      <% if (typeof showBackButton === 'undefined' || showBackButton) { %>
+  <!-- Mobile version -->
+  <div class="d-block d-md-none mb-4 text-center">
+    <a href="/" class="btn btn-outline-dark btn-sm">
+      <i class="bi bi-arrow-left me-1"></i>Back to Home
+    </a>
+  </div>
+
+  <!-- Desktop version -->
+  <a href="/" class="back-to-home d-none d-lg-flex text-dark text-decoration-none align-items-center">
+    <i class="bi bi-arrow-left me-1"></i>Home
+  </a>
+<% } %>
+
+      
 
       <div class="card card-custom shadow-lg border-0">
         <div class="card-body p-5">
@@ -100,6 +109,8 @@
                       <a href="/register" class="text-decoration-none fw-semibold text-primary">Sign up here</a>
                     </p>
                   </div>
+
+                  
         </div>
       </div>
     </div>
