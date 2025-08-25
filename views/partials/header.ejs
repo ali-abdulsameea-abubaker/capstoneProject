@@ -282,20 +282,22 @@
           <% if (typeof username !== 'undefined') { %>
             
             
-            <!-- User profile (desktop) -->
-            <li class="nav-item d-none d-md-block">
-              <div class="user-profile">
-                <a class="nav-link" href="/profile"><img 
-                  src="<%= typeof profilePicture !== 'undefined' ? profilePicture : '/images/default-avatar.png' %>" 
-                  class="user-avatar rounded-circle" 
-                  onerror="this.src='/images/default-avatar.png'"
-                  alt="Profile"
-                ></a>
-                <span class="navbar-text d-none d-lg-inline"> welcome 
-                  <%= username %>
-                </span>
-              </div>
-            </li>
+            <li class="nav-item">
+  <div class="user-profile">
+    <a class="nav-link" href="/profile">
+      <img 
+        src="<%= typeof profilePicture !== 'undefined' ? profilePicture : '/images/default-avatar.png' %>" 
+        class="user-avatar rounded-circle" 
+        onerror="this.src='/images/default-avatar.png'"
+        alt="Profile"
+        style="width: 32px; height: 32px; object-fit: cover;"
+      >
+      <span class="navbar-text d-none d-md-inline ms-1">
+        Welcome <%= username %>
+      </span>
+    </a>
+  </div>
+</li>
             
             <!-- Profile link
             <li class="nav-item">
@@ -324,12 +326,12 @@
 
 
             <!-- Theme Toggle Button -->
-            <li class="nav-item d-none d-md-block">
-              <button id="themeToggle" class="btn btn-outline-light theme-toggle" title="Toggle dark/light mode">
-                <i class="bi bi-sun-fill d-none" id="lightIcon"></i>
-                <i class="bi bi-moon-fill" id="darkIcon"></i>
-              </button>
-            </li>
+            <li class="nav-item">
+  <button id="themeToggle" class="btn btn-outline-light theme-toggle" title="Toggle dark/light mode">
+    <i class="bi bi-sun-fill d-none" id="lightIcon"></i>
+    <i class="bi bi-moon-fill" id="darkIcon"></i>
+  </button>
+</li>
             
           <% } else { %>
             <!-- Login and Register buttons for non-authenticated users -->

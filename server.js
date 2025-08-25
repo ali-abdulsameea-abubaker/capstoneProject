@@ -38,6 +38,7 @@ app.use(
       sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000,
     },
+     store: session.MemoryStore() // Consider using a proper store for production
   })
 );
 
